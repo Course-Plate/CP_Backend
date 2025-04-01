@@ -44,12 +44,10 @@ public class UserController {
     // 아이디와 비밀번호를 사용하여 로그인
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
-        String userId = credentials.get("userId");
-        String password = credentials.get("password");
-        User user = userService.login(userId, password);
-        if (user != null) {
-            return ResponseEntity.ok(user);
-        } else {
+        try {
+            String token = userService.login(credentials.get("userId"), credentials.get("password"));
+            return ResponseEntity.ok(Map.of("token", token));
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
     }

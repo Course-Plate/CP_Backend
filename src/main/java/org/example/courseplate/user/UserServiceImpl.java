@@ -1,5 +1,6 @@
 package org.example.courseplate.user;
 
+import org.example.courseplate.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -9,12 +10,14 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtUtil jwtUtil;
 
     // @Autowired: Spring이 자동으로 필요한 의존성을 주입합니다.
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     // 사용자 회원가입 메서드
@@ -48,13 +51,12 @@ public class UserServiceImpl implements UserService {
 
     // 사용자 로그인 메서드
     @Override
-    public User login(String userId, String password) {
+    public String login(String userId, String password) {
         User user = userRepository.findByUserId(userId);
-        // 사용자가 존재하고 비밀번호가 일치하는지 확인
         if (user != null && bCryptPasswordEncoder.matches(password, user.getPassword())) {
-            return user; // 비밀번호가 일치하면 사용자 객체 반환
+            return jwtUtil.generateToken(user.getUserId()); // JWT 발급
         }
-        return null; // 아이디나 비밀번호가 일치하지 않는 경우 null 반환
+        throw new RuntimeException("Invalid credentials");
     }
 
     // 사용자 아이디가 존재하는지 확인하는 메서드
